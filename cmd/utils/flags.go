@@ -30,7 +30,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codegangsta/cli"
 	"github.com/ethereum/ethash"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
@@ -51,6 +50,7 @@ import (
 	"github.com/ethereum/go-ethereum/release"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/whisper"
+	"gopkg.in/urfave/cli.v1"
 )
 
 func init() {
@@ -181,6 +181,10 @@ var (
 		Usage: "Target gas limit sets the artificial target gas floor for the blocks to mine",
 		Value: params.GenesisGasLimit.String(),
 	}
+	DAOSoftForkFlag = cli.BoolFlag{
+		Name:  "dao-soft-fork",
+		Usage: "Vote for the DAO soft-fork, temporarilly decreasing the gas limits",
+	}
 	AutoDAGFlag = cli.BoolFlag{
 		Name:  "autodag",
 		Usage: "Enable automatic DAG pregeneration",
@@ -302,7 +306,7 @@ var (
 		Name:  "exec",
 		Usage: "Execute JavaScript statement (only in combination with console/attach)",
 	}
-	PreLoadJSFlag = cli.StringFlag{
+	PreloadJSFlag = cli.StringFlag{
 		Name:  "preload",
 		Usage: "Comma separated list of JavaScript files to preload into the console",
 	}
@@ -677,6 +681,9 @@ func MakeSystemNode(name, version string, relconf release.Config, extra []byte, 
 	// Configure the Ethereum service
 	accman := MakeAccountManager(ctx)
 
+	// Handle some miner strategies arrising from the DAO fiasco
+	core.DAOSoftFork = ctx.GlobalBool(DAOSoftForkFlag.Name)
+
 	// initialise new random number generator
 	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	// get enabled jit flag
@@ -863,4 +870,21 @@ func MakeChain(ctx *cli.Context) (chain *core.BlockChain, chainDb ethdb.Database
 		Fatalf("Could not start chainmanager: %v", err)
 	}
 	return chain, chainDb
+}
+
+// MakeConsolePreloads retrieves the absolute paths for the console JavaScript
+// scripts to preload before starting.
+func MakeConsolePreloads(ctx *cli.Context) []string {
+	// Skip preloading if there's nothing to preload
+	if ctx.GlobalString(PreloadJSFlag.Name) == "" {
+		return nil
+	}
+	// Otherwise resolve absolute paths and return them
+	preloads := []string{}
+
+	assets := ctx.GlobalString(JSpathFlag.Name)
+	for _, file := range strings.Split(ctx.GlobalString(PreloadJSFlag.Name), ",") {
+		preloads = append(preloads, common.AbsolutePath(assets, strings.TrimSpace(file)))
+	}
+	return preloads
 }
