@@ -247,7 +247,8 @@ func ValidateHeader(config *ChainConfig, pow pow.PoW, header *types.Header, pare
 			return &BlockNonceErr{header.Number, header.Hash(), header.Nonce.Uint64()}
 		}
 	}
-	return nil
+	// If all checks passed, validate the extra-data field for hard forks
+	return ValidateDAOHeaderExtraData(config, header)
 }
 
 // CalcDifficulty is the difficulty adjustment algorithm. It returns
@@ -370,11 +371,6 @@ func CalcGasLimit(parent *types.Block) *big.Int {
 	if gl.Cmp(params.TargetGasLimit) < 0 {
 		gl.Add(parent.GasLimit(), decay)
 		gl.Set(common.BigMin(gl, params.TargetGasLimit))
-	}
-	// Temporary special case: if DAO rupture is requested, cap the gas limit
-	if DAOSoftFork && parent.NumberU64() <= ruptureBlock && gl.Cmp(ruptureTarget) > 0 {
-		gl.Sub(parent.GasLimit(), decay)
-		gl.Set(common.BigMax(gl, ruptureTarget))
 	}
 	return gl
 }

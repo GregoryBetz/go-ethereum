@@ -141,6 +141,8 @@ type VmTest struct {
 
 type RuleSet struct {
 	HomesteadBlock *big.Int
+	DAOForkBlock   *big.Int
+	DAOForkSupport bool
 }
 
 func (r RuleSet) IsHomestead(n *big.Int) bool {
@@ -207,7 +209,6 @@ func NewEnvFromMap(ruleSet RuleSet, state *state.StateDB, envValues map[string]s
 	return env
 }
 
-func (self *Env) MarkCodeHash(common.Hash) {}
 func (self *Env) RuleSet() vm.RuleSet      { return self.ruleSet }
 func (self *Env) Vm() vm.Vm                { return self.evm }
 func (self *Env) Origin() common.Address   { return self.origin }

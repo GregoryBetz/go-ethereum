@@ -68,7 +68,6 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.OlympicFlag,
 			utils.TestNetFlag,
 			utils.DevModeFlag,
-			utils.GenesisFileFlag,
 			utils.IdentityFlag,
 			utils.FastSyncFlag,
 			utils.LightKDFFlag,
@@ -128,7 +127,6 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.TargetGasLimitFlag,
 			utils.GasPriceFlag,
 			utils.ExtraDataFlag,
-			utils.DAOSoftForkFlag,
 		},
 	},
 	{
